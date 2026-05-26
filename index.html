@@ -8,8 +8,6 @@
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f5f7fb;color:#1e293b;display:flex;justify-content:center;min-height:100vh;padding:20px}
     .app{max-width:1400px;width:100%;background:white;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,0.05);display:flex;overflow:hidden;min-height:85vh}
-
-    /* 侧边栏 */
     .sidebar{width:260px;background:#f8fafc;padding:24px 16px;border-right:1px solid #e9eef3;display:flex;flex-direction:column;gap:8px;flex-shrink:0;transition:all 0.3s}
     .sidebar-title{font-size:20px;font-weight:700;margin-bottom:16px;padding-left:12px;color:#1e3a8a}
     .search-box{margin-bottom:12px;position:relative}
@@ -19,8 +17,6 @@
     .nav-item{padding:12px 16px;border-radius:12px;font-size:14px;font-weight:500;color:#334155;cursor:pointer;display:flex;align-items:center;gap:8px;background:transparent;border:1px solid transparent;user-select:none}
     .nav-item:hover{background:#eef2ff}
     .nav-item.active{background:#2563eb;color:white;border-color:#2563eb}
-
-    /* 主内容区 */
     .main-content{flex:1;padding:28px 32px;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
     .top-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px}
     .filter-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -28,25 +24,18 @@
     .btn{padding:10px 20px;border-radius:20px;border:1px solid #e2e8f0;background:white;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:0.2s;white-space:nowrap}
     .btn:hover{background:#f1f5f9}
     #monthFilter{border:2px solid #2563eb;background:#f0f5ff;font-weight:600}
-
-    /* 分析卡片 */
-    .analysis-card{background:#ebf4ff;border-left:5px solid #2563eb;border-radius:16px;padding:10px 24px 16px 24px;margin-bottom:24px;color:#1e3a8a;line-height:1.6;font-size:15px;white-space:pre-wrap;position:relative}
+    .analysis-card{background:#ebf4ff;border-left:5px solid #2563eb;border-radius:16px;padding:10px 24px 16px 24px;margin-bottom:24px;color:#1e3a8a;line-height:1.6;font-size:15px;position:relative}
     .analysis-card .analysis-title{font-size:14px;font-weight:700;color:#1e40af;margin-bottom:6px;display:flex;align-items:center;gap:6px}
-    .analysis-card .edit-hint{position:absolute;right:16px;top:10px;color:#2563eb;cursor:pointer;font-size:13px;opacity:0.7}
+    .analysis-card .edit-tools{display:flex;gap:8px;margin-top:10px}
+    .analysis-card .edit-tools .btn{padding:4px 12px;font-size:12px}
     .analysis-card[contenteditable="true"]{background:white;border:2px dashed #2563eb;outline:none}
-
-    /* KPI卡片 */
     .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:24px}
     .card{background:white;border-radius:16px;padding:16px;box-shadow:0 4px 12px rgba(0,0,0,0.03);border:1px solid #f0f2f5}
     .card-label{font-size:12px;color:#64748b;margin-bottom:4px}
     .card-label .unit{font-size:10px;color:#94a3b8;margin-left:2px}
     .card-value{font-size:22px;font-weight:700}
-
-    /* 图表 */
     .chart-container{height:350px;margin:16px 0;background:#fafafa;border-radius:12px;position:relative}
     .chart-tooltip{position:absolute;background:rgba(0,0,0,0.8);color:white;padding:6px 12px;border-radius:6px;font-size:12px;pointer-events:none;white-space:nowrap;display:none;z-index:10;transform:translate(-50%,-100%);margin-top:-8px}
-
-    /* 表格 */
     .table-wrapper{overflow-x:auto;border-radius:12px;border:1px solid #edf2f7;margin-top:16px}
     table{width:100%;border-collapse:collapse;font-size:14px;white-space:nowrap}
     th{background:#f8fafc;padding:12px;font-weight:600;color:#334155;border-bottom:1px solid #e2e8f0}
@@ -57,10 +46,7 @@
     .arrow-up{color:#dc2626}
     .arrow-down{color:#16a34a}
     input.edit-field{width:80px;padding:4px;text-align:center;border:1px solid #2563eb;border-radius:4px}
-
     .footer-note{margin-top:auto;padding-top:20px;font-size:12px;color:#94a3b8;text-align:center}
-
-    /* 移动端适配 */
     @media(max-width:850px){
       body{padding:10px}
       .app{flex-direction:column;border-radius:16px}
@@ -79,7 +65,6 @@
       .chart-container{height:280px}
       .analysis-card{padding:8px 16px 12px 16px;font-size:14px}
       .analysis-card .analysis-title{font-size:13px}
-      .analysis-card .edit-hint{right:8px;top:8px;font-size:12px}
     }
     @media(max-width:480px){
       .sidebar{padding:12px}
@@ -126,7 +111,7 @@
       </div>
     </div>
     <div id="dashboardContent"></div>
-    <div class="footer-note">💡 双击表格编辑 | 鼠标悬停图表查看数值 | 点击分析卡片右上角✎修改结论</div>
+    <div class="footer-note">💡 双击表格编辑 | 鼠标悬停图表查看数值 | 点击分析卡片右上角✎开始编辑（支持加粗等格式，编辑后点保存）</div>
   </div>
 </div>
 
@@ -349,10 +334,10 @@
   const arrow = v=>v>0?'<span class="arrow-up">▲</span>':(v<0?'<span class="arrow-down">▼</span>':'');
   const ytd = arr=>arr.reduce((s,v)=>s+(typeof v=='number'?v:0),0);
 
-  function save(){try{localStorage.setItem('hr_final_v4',JSON.stringify(modules));}catch(e){}}
+  function save(){try{localStorage.setItem('hr_final_v5',JSON.stringify(modules));}catch(e){}}
   function load(){
     try{
-      const d=localStorage.getItem('hr_final_v4');
+      const d=localStorage.getItem('hr_final_v5');
       if(d) modules = JSON.parse(d);
       else modules = JSON.parse(JSON.stringify(defaultModules));
     } catch(e){ modules = JSON.parse(JSON.stringify(defaultModules)); }
@@ -370,22 +355,23 @@
       if(u==='万元/人') return val.toFixed(2)+'万元/人';
       return val.toFixed(2);
     };
-    let t = `• 截至${m}，2026年YTD为${fmt(mod.ytd2026,mod.unit)}，同比${mod.ytd2026-mod.ytd2025>=0?'增长':'下降'}${fmt(Math.abs(mod.ytd2026-mod.ytd2025),mod.unit)}。\n`;
-    t += `• ${m}当月值为${fmt(v,mod.unit)}，同比${y!=null?fmt(y,'%'):'无'}，环比${mo!=null?fmt(mo,'%'):'无'}。\n`;
+    let html = '';
+    html += `<b>• 截至${m}，2026年YTD为${fmt(mod.ytd2026,mod.unit)}，同比${mod.ytd2026-mod.ytd2025>=0?'增长':'下降'}${fmt(Math.abs(mod.ytd2026-mod.ytd2025),mod.unit)}。</b><br>`;
+    html += `<b>• ${m}当月值为${fmt(v,mod.unit)}，同比${y!=null?fmt(y,'%'):'无'}，环比${mo!=null?fmt(mo,'%'):'无'}。</b><br>`;
     let suggestion = '';
-    if(y!=null && y>20) suggestion = '✓ 同比大幅提升，表现优异，可总结成功经验。';
-    else if(y!=null && y<-20) suggestion = '⚠️ 同比显著下降，需排查原因并制定改进措施。';
-    if(mo!=null && mo>30) suggestion += ' 环比增长强劲，关注持续性。';
-    else if(mo!=null && mo<-30) suggestion += ' 环比下滑明显，需警惕短期波动。';
+    if(y!=null && y>20) suggestion = '<span style="color:#16a34a">✓ 同比大幅提升，表现优异，可总结成功经验。</span>';
+    else if(y!=null && y<-20) suggestion = '<span style="color:#dc2626">⚠️ 同比显著下降，需排查原因并制定改进措施。</span>';
+    if(mo!=null && mo>30) suggestion += ' <span style="color:#2563eb">环比增长强劲，关注持续性。</span>';
+    else if(mo!=null && mo<-30) suggestion += ' <span style="color:#dc2626">环比下滑明显，需警惕短期波动。</span>';
     if(!suggestion) suggestion = '数据平稳，继续保持现有节奏。';
-    t += `💡 建议：${suggestion}\n`;
+    html += `💡 建议：${suggestion}<br>`;
     let warns=[];
     for(let i=0;i<=last;i++){
       if(mod.yoy[i]!=null&&Math.abs(mod.yoy[i])>50) warns.push(`${months[i]}同比${fmt(mod.yoy[i],'%')}`);
       if(mod.mom[i]!=null&&Math.abs(mod.mom[i])>50) warns.push(`${months[i]}环比${fmt(mod.mom[i],'%')}`);
     }
-    if(warns.length) t += `⚠️ 异常波动月份：${warns.join('、')}，请重点关注。`;
-    return t;
+    if(warns.length) html += `<span style="color:#dc2626">⚠️ 异常波动月份：${warns.join('、')}，请重点关注。</span>`;
+    return html;
   }
 
   function recalc(mod){
@@ -426,7 +412,6 @@
     `;
     const filtered = modules.filter(m => m.name.toLowerCase().includes(searchTerm));
     renderNavList(filtered);
-
     document.getElementById('moduleSearch').addEventListener('input', function(e) {
       searchTerm = e.target.value.toLowerCase();
       const filtered = modules.filter(m => m.name.toLowerCase().includes(searchTerm));
@@ -484,29 +469,54 @@
     }).join('');
 
     document.getElementById('dashboardContent').innerHTML = `
-      <div class="analysis-card" id="analysisText" contenteditable="false">
+      <div class="analysis-card" id="analysisText">
         <div class="analysis-title">📊 数据分析</div>
-        ${mod.analysis.replace(/\n/g,'<br>')}
+        <div id="analysisContent" style="min-height:60px">${mod.analysis}</div>
+        <div class="edit-tools" id="editTools" style="display:none">
+          <button class="btn" id="saveAnalysisBtn">💾 保存</button>
+          <button class="btn" id="cancelAnalysisBtn">↩️ 取消</button>
+        </div>
         <span class="edit-hint" id="toggleEdit">✎ 编辑</span>
       </div>
       <div class="cards">${cardsHtml}</div>
       <div class="chart-container" id="chartContainer"></div>
       <div class="table-wrapper"><table><thead><tr><th>月份</th><th>2025年</th><th>2026年</th><th>同比</th><th>环比</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
 
-    document.getElementById('toggleEdit').onclick = ()=>{
-      const el = document.getElementById('analysisText');
-      if(el.contentEditable==='true'){
-        el.contentEditable='false';
-        let text = el.innerText.replace(/\n/g,'<br>');
-        text = text.replace(/📊 数据分析<br?>/,'');
-        mod.analysis = text;
-        save(); renderDashboard();
-      } else {
-        el.contentEditable='true';
-        el.focus();
-      }
+    // 编辑相关逻辑
+    const analysisCard = document.getElementById('analysisText');
+    const analysisContent = document.getElementById('analysisContent');
+    const editTools = document.getElementById('editTools');
+    const toggleEdit = document.getElementById('toggleEdit');
+    let originalHtml = mod.analysis;
+
+    toggleEdit.onclick = function() {
+      // 进入编辑模式
+      analysisContent.contentEditable = 'true';
+      analysisContent.focus();
+      editTools.style.display = 'flex';
+      toggleEdit.style.display = 'none';
+      originalHtml = mod.analysis;
     };
 
+    document.getElementById('saveAnalysisBtn').onclick = function() {
+      // 保存编辑
+      mod.analysis = analysisContent.innerHTML;
+      save();
+      analysisContent.contentEditable = 'false';
+      editTools.style.display = 'none';
+      toggleEdit.style.display = 'block';
+    };
+
+    document.getElementById('cancelAnalysisBtn').onclick = function() {
+      // 取消编辑
+      analysisContent.innerHTML = originalHtml;
+      mod.analysis = originalHtml;
+      analysisContent.contentEditable = 'false';
+      editTools.style.display = 'none';
+      toggleEdit.style.display = 'block';
+    };
+
+    // 表格编辑
     document.querySelectorAll('td.editable').forEach(td=>{
       td.ondblclick = function(){
         const type=this.dataset.type, idx=parseInt(this.dataset.idx);
@@ -547,7 +557,7 @@
     const mod=modules[currentIdx];
     let csv='月份,2025年,2026年,同比%,环比%\n';
     for(let i=0;i<12;i++) csv+=`${months[i]},${mod.data2025[i]??''},${mod.data2026[i]??''},${mod.yoy[i]??''},${mod.mom[i]??''}\n`;
-    csv+=`\n分析,${mod.analysis.replace(/\n/g,' ')}`;
+    csv+=`\n分析,"${mod.analysis.replace(/"/g,'""')}"`;
     const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`人效_${mod.name}.csv`; a.click();
   };
@@ -561,7 +571,7 @@
       const mod=modules[currentIdx];
       for(let i=1;i<lines.length;i++){
         const cols=lines[i].split(',');
-        if(cols[0]==='分析'){mod.analysis=cols.slice(1).join(',');break;}
+        if(cols[0]==='分析'){mod.analysis=cols.slice(1).join(',').replace(/"/g,'');break;}
         const mi=months.indexOf(cols[0]); if(mi===-1) continue;
         mod.data2025[mi]=cols[1]!==''?parseFloat(cols[1]):null;
         mod.data2026[mi]=cols[2]!==''?parseFloat(cols[2]):null;
@@ -569,7 +579,7 @@
         mod.mom[mi]=cols[4]!==''?parseFloat(cols[4]):null;
       }
       recalc(mod); save();
-      mod.analysis = genAnalysis(mod);
+      mod.analysis = mod.analysis || genAnalysis(mod);
       renderAll(); alert('导入成功');
     };
     reader.readAsText(file,'UTF-8');
