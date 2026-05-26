@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>百世兴人效数据看板</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f5f7fb;color:#1e293b;display:flex;justify-content:center;min-height:100vh;padding:20px}
+    .app{max-width:1400px;width:100%;background:white;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,0.05);display:flex;overflow:hidden;min-height:85vh}
+    .sidebar{width:260px;background:#f8fafc;padding:24px 16px;border-right:1px solid #e9eef3;display:flex;flex-direction:column;gap:8px;flex-shrink:0;transition:all 0.3s}
+    .sidebar-title{font-size:20px;font-weight:700;margin-bottom:16px;padding-left:12px;color:#1e3a8a}
+    .search-box{margin-bottom:12px;position:relative}
+    .search-box input{width:100%;padding:10px 12px 10px 32px;border-radius:12px;border:1px solid #e2e8f0;background:white;font-size:14px}
+    .search-box i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px;font-style:normal}
+    .nav-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+    .nav-item{padding:12px 16px;border-radius:12px;font-size:14px;font-weight:500;color:#334155;cursor:pointer;display:flex;align-items:center;gap:8px;background:transparent;border:1px solid transparent;user-select:none}
+    .nav-item:hover{background:#eef2ff}
+    .nav-item.active{background:#2563eb;color:white;border-color:#2563eb}
+    .main-content{flex:1;padding:28px 32px;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
+    .top-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px}
+    .filter-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .filter-label{font-size:14px;font-weight:600;color:#334155;margin-right:4px;white-space:nowrap}
+    .btn{padding:10px 20px;border-radius:20px;border:1px solid #e2e8f0;background:white;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:0.2s;white-space:nowrap}
+    .btn:hover{background:#f1f5f9}
+    #monthFilter{border:2px solid #2563eb;background:#f0f5ff;font-weight:600}
+    .analysis-card{background:#ebf4ff;border-left:5px solid #2563eb;border-radius:16px;padding:10px 24px 16px 24px;margin-bottom:24px;color:#1e3a8a;line-height:1.6;font-size:15px;position:relative}
+    .analysis-card .analysis-title{font-size:14px;font-weight:700;color:#1e40af;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+    .analysis-card .edit-tools{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
+    .analysis-card .edit-tools .btn{padding:4px 12px;font-size:12px}
+    .format-bar{display:flex;gap:4px;margin-right:12px}
+    .format-btn{padding:4px 8px;border-radius:4px;border:1px solid #cbd5e1;background:white;cursor:pointer;font-size:12px;font-weight:bold}
+    .format-btn:hover{background:#eef2ff}
+    .analysis-content{border:1px dashed transparent;padding:8px;border-radius:8px;min-height:60px;outline:none}
+    .analysis-content[contenteditable="true"]{border-color:#2563eb;background:white}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:24px}
+    .card{background:white;border-radius:16px;padding:16px;box-shadow:0 4px 12px rgba(0,0,0,0.03);border:1px solid #f0f2f5}
+    .card-label{font-size:12px;color:#64748b;margin-bottom:4px}
+    .card-label .unit{font-size:10px;color:#94a3b8;margin-left:2px}
+    .card-value{font-size:22px;font-weight:700}
+    .chart-container{height:350px;margin:16px 0;background:#fafafa;border-radius:12px;position:relative}
+    .chart-tooltip{position:absolute;background:rgba(0,0,0,0.8);color:white;padding:6px 12px;border-radius:6px;font-size:12px;pointer-events:none;white-space:nowrap;display:none;z-index:10;transform:translate(-50%,-100%);margin-top:-8px}
+    .table-wrapper{overflow-x:auto;border-radius:12px;border:1px solid #edf2f7;margin-top:16px}
+    table{width:100%;border-collapse:collapse;font-size:14px;white-space:nowrap}
+    th{background:#f8fafc;padding:12px;font-weight:600;color:#334155;border-bottom:1px solid #e2e8f0}
+    td{padding:10px;text-align:center;border-bottom:1px solid #f1f5f9}
+    td.editable{cursor:pointer;background:#fffbeb}
+    td.editable:hover{background:#fef3c7}
+    tr.highlight-row td{background:#eef2ff!important;font-weight:600}
+    .arrow-up{color:#dc2626}
+    .arrow-down{color:#16a34a}
+    input.edit-field{width:80px;padding:4px;text-align:center;border:1px solid #2563eb;border-radius:4px}
+    .footer-note{margin-top:auto;padding-top:20px;font-size:12px;color:#94a3b8;text-align:center}
+    .save-success{position:fixed;top:20px;right:20px;background:#16a34a;color:white;padding:10px 20px;border-radius:20px;z-index:999;animation:fadeOut 2s forwards}
+    @keyframes fadeOut{0%{opacity:1}80%{opacity:1}100%{opacity:0}}
+    @media(max-width:850px){
+      body{padding:10px}
+      .app{flex-direction:column;border-radius:16px}
+      .sidebar{width:100%;padding:16px;border-right:none;border-bottom:1px solid #e9eef3;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}
+      .sidebar-title{font-size:18px;margin-bottom:0;padding-left:0}
+      .search-box{flex:1;min-width:200px;margin-bottom:0}
+      .nav-list{flex-direction:row;flex-wrap:wrap;gap:6px;overflow-x:auto;padding:4px 0}
+      .nav-item{padding:8px 12px;font-size:13px;white-space:nowrap}
+      .main-content{padding:20px 16px}
+      .top-bar{flex-direction:column;align-items:flex-start;gap:16px}
+      .filter-group{width:100%;justify-content:space-between}
+      .filter-label{font-size:13px}
+      .btn{padding:8px 16px;font-size:13px}
+      .cards{grid-template-columns:repeat(2,1fr);gap:12px}
+      .card-value{font-size:20px}
+      .chart-container{height:280px}
+      .analysis-card{padding:8px 16px 12px 16px;font-size:14px}
+      .analysis-card .analysis-title{font-size:13px}
+    }
+    @media(max-width:480px){
+      .sidebar{padding:12px}
+      .sidebar-title{font-size:16px}
+      .nav-item{padding:6px 10px;font-size:12px}
+      .main-content{padding:16px 12px}
+      .filter-group{gap:6px}
+      .filter-label{font-size:12px}
+      .btn{padding:6px 12px;font-size:12px}
+      .cards{grid-template-columns:1fr 1fr;gap:8px}
+      .card{padding:12px}
+      .card-value{font-size:18px}
+      .chart-container{height:250px}
+      table{font-size:12px}
+      th,td{padding:8px 6px}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-content">
+    <div class="top-bar">
+      <div class="filter-group">
+        <span class="filter-label">📅 年份</span>
+        <select id="yearFilter" class="btn">
+          <option value="all">全部年份</option>
+          <option value="2025">2025年</option>
+          <option value="2026">2026年</option>
+        </select>
+        <span class="filter-label" style="margin-left:12px">📆 月份</span>
+        <select id="monthFilter" class="btn">
+          <option value="ytd">YTD累计</option>
+          <option value="0">1月</option><option value="1">2月</option><option value="2">3月</option><option value="3">4月</option>
+          <option value="4">5月</option><option value="5">6月</option><option value="6">7月</option><option value="7">8月</option>
+          <option value="8">9月</option><option value="9">10月</option><option value="10">11月</option><option value="11">12月</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn" id="exportBtn">⬇️ 导出CSV</button>
+        <button class="btn" id="importBtn">⬆️ 导入CSV</button>
+        <button class="btn" id="resetBtn">↺ 重置</button>
+        <input type="file" id="importFile" accept=".csv" hidden>
+      </div>
+    </div>
+    <div id="dashboardContent"></div>
+    <div class="footer-note">💡 双击表格编辑 | 鼠标悬停图表查看数值 | 点击分析卡片右上角✎开始编辑（支持加粗等格式，编辑后点保存）</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  class SimpleChart {
+    constructor(container, data, highlightMonth = -1) {
+      this.container = container;
+      this.canvas = container.querySelector('canvas');
+      if(!this.canvas) {
+        this.canvas = document.createElement('canvas');
+        this.canvas.style.width = '100%';
+        this.canvas.style.height = '100%';
+        container.appendChild(this.canvas);
+      }
+      this.ctx = this.canvas.getContext('2d');
+      this.data = data;
+      this.highlightMonth = highlightMonth;
+      this.tooltip = document.createElement('div');
+      this.tooltip.className = 'chart-tooltip';
+      this.container.appendChild(this.tooltip);
+      this.barRects = [];
+      this.render();
+      window.addEventListener('resize', () => this.render());
+      this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+      this.canvas.addEventListener('mouseleave', () => { this.tooltip.style.display = 'none'; });
+    }
+    handleMouseMove(e) {
+      const rect = this.canvas.getBoundingClientRect();
+      const scaleX = this.canvas.width / (window.devicePixelRatio * rect.width);
+      const scaleY = this.canvas.height / (window.devicePixelRatio * rect.height);
+      const mouseX = (e.clientX - rect.left) * scaleX;
+      const mouseY = (e.clientY - rect.top) * scaleY;
+      let found = null;
+      for (let i = 0; i < this.barRects.length; i++) {
+        const bar = this.barRects[i];
+        if (mouseX >= bar.x && mouseX <= bar.x + bar.w && mouseY >= bar.y && mouseY <= bar.y + bar.h) {
+          found = bar; break;
+        }
+      }
+      if (found) {
+        this.tooltip.style.display = 'block';
+        this.tooltip.innerHTML = `${found.label}<br>${found.datasetLabel}: ${found.value}`;
+        const containerRect = this.container.getBoundingClientRect();
+        this.tooltip.style.left = (e.clientX - containerRect.left) + 'px';
+        this.tooltip.style.top = (e.clientY - containerRect.top - 20) + 'px';
+      } else { this.tooltip.style.display = 'none'; }
+    }
+    render() {
+      const { labels, datasets } = this.data;
+      const rect = this.container.getBoundingClientRect();
+      const w = rect.width, h = rect.height;
+      this.canvas.width = w * devicePixelRatio;
+      this.canvas.height = h * devicePixelRatio;
+      this.canvas.style.width = w + 'px';
+      this.canvas.style.height = h + 'px';
+      const ctx = this.ctx;
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+      ctx.clearRect(0,0,w,h);
+      this.barRects = [];
+      const legendHeight = 28;
+      const pad = {top:20, right:30, bottom:35 + legendHeight, left:45};
+      const cw = w - pad.left - pad.right;
+      const ch = h - pad.top - pad.bottom;
+      let allVals = [];
+      datasets.forEach(d=> allVals = allVals.concat(d.data.filter(v=>v!=null)));
+      const max = Math.max(...allVals, 1);
+      const yScale = ch / max;
+      ctx.strokeStyle='#e2e8f0'; ctx.beginPath(); ctx.moveTo(pad.left,pad.top); ctx.lineTo(pad.left,pad.top+ch); ctx.stroke();
+      const steps=5;
+      for(let i=0;i<=steps;i++){
+        const y = pad.top + (ch/steps)*i, val = max - (max/steps)*i;
+        ctx.fillStyle='#94a3b8'; ctx.font='10px sans-serif'; ctx.textAlign='right';
+        ctx.fillText(Math.round(val), pad.left-6, y+3);
+        ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+cw,y); ctx.strokeStyle='#f1f5f9'; ctx.stroke();
+      }
+      const barW = (cw / labels.length) / (datasets.length + 1);
+      labels.forEach((l,i)=>{
+        const x = pad.left + (cw/labels.length)*i + (cw/labels.length)/2;
+        datasets.forEach((ds,di)=>{
+          const v = ds.data[i]; if(v==null) return;
+          const bh = v * yScale;
+          const bx = x - (datasets.length*barW)/2 + di*barW;
+          const by = pad.top+ch-bh;
+          if (i === this.highlightMonth) {
+            ctx.fillStyle = ds.backgroundColor;
+            ctx.fillRect(bx, by, barW-2, bh);
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(bx, by, barW-2, bh);
+            ctx.lineWidth = 1;
+          } else {
+            ctx.fillStyle = ds.backgroundColor;
+            ctx.fillRect(bx, by, barW-2, bh);
+          }
+          const unit = ds.unit || '';
+          let valueStr = v.toFixed(2);
+          if (unit === '%') valueStr = v.toFixed(2) + '%';
+          else if (unit === '万元') valueStr = v.toFixed(2) + '万元';
+          else if (unit === '件') valueStr = v.toFixed(0) + '件';
+          else if (unit === '件/人') valueStr = v.toFixed(0) + '件/人';
+          else if (unit === '万元/人') valueStr = v.toFixed(2) + '万元/人';
+          this.barRects.push({ x: bx, y: by, w: barW-2, h: bh, label: l, datasetLabel: ds.label, value: valueStr });
+        });
+        ctx.fillStyle='#334155'; ctx.font='11px sans-serif'; ctx.textAlign='center';
+        ctx.fillText(l, x, pad.top+ch+18);
+      });
+      const legendY = pad.top + ch + 25;
+      const totalLegendWidth = datasets.length * 90;
+      let startX = pad.left + (cw - totalLegendWidth) / 2;
+      if (startX < pad.left) startX = pad.left;
+      datasets.forEach((ds, index) => {
+        const x = startX + index * 90;
+        ctx.fillStyle = ds.backgroundColor;
+        ctx.fillRect(x, legendY, 12, 12);
+        ctx.fillStyle = '#334155';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'start';
+        ctx.fillText(ds.label, x + 16, legendY + 10);
+      });
+    }
+  }
+
+  const defaultModules = [
+    { id:'salesPerCapita', name:'👥 全员人均销售额', unit:'万元/人',
+      data2025:[7.97,3.62,6.19,7.43,6.86,7.26,7.43,8.13,8.08,6.52,8.46,8.27],
+      data2026:[12.44,5.47,7.33,10.12,null,null,null,null,null,null,null,null],
+      yoy:[56.02,51.00,18.42,36.25,null,null,null,null,null,null,null,null],
+      mom:[null,-56.00,33.92,38.10,null,null,null,null,null,null,null,null],
+      avg2025:7.19,ytd2025:25.99,avg2026:8.41,ytd2026:35.55,analysis:"" },
+    { id:'mktSalesPerCapita', name:'📢 营销中心人均销售额', unit:'万元/人',
+      data2025:[90.28,31.78,54.83,61.59,null,null,null,null,null,null,null,null],
+      data2026:[67.96,27.47,35.04,52.51,null,null,null,null,null,null,null,null],
+      yoy:[], mom:[], avg2025:0,ytd2025:0,avg2026:0,ytd2026:0,analysis:"" },
+    { id:'ecomSalesPerCapita', name:'🛒 电商中心人均销售额', unit:'万元/人',
+      data2025:[25.0,10.1,16.4,20.1,null,null,null,null,null,null,null,null],
+      data2026:[35.2,17.2,21.5,25.4,null,null,null,null,null,null,null,null],
+      yoy:[], mom:[], avg2025:0,ytd2025:0,avg2026:0,ytd2026:0,analysis:"" },
+    { id:'workerOutput', name:'🏭 一线工人人均产量', unit:'件/人',
+      data2025:[1475.27,1250.04,1467.06,1768.73,957.31,1304.11,1281.07,1327.00,1338.60,1057.24,1448.52,1509.33],
+      data2026:[2102.16,1031.46,1466.45,2107.72,null,null,null,null,null,null,null,null],
+      yoy:[42.49,-17.49,-0.04,19.17,null,null,null,null,null,null,null,null],
+      mom:[null,-50.93,42.17,43.73,null,null,null,null,null,null,null,null],
+      avg2025:1526.58,ytd2025:1526.58,avg2026:1672.05,ytd2026:1337.64,analysis:"" },
+    { id:'totalLaborCost', name:'💰 总人力成本', unit:'万元',
+      data2025:[156.47,132.58,155.81,161.12,181.45,206.91,208.90,201.46,225.09,203.95,196.66,213.09],
+      data2026:[192.75,175.99,261.57,203.98,0,0,0,0,0,0,0,0],
+      yoy:[23.19,32.74,67.87,26.60,-100,-100,-100,-100,-100,-100,-100,-100],
+      mom:[null,-8.70,48.63,-22.02,-100,null,null,null,null,null,null,null],
+      avg2025:151.50,ytd2025:605.99,avg2026:208.57,ytd2026:834.29,analysis:"" },
+    { id:'avgLaborCost', name:'📊 全员人均人力成本', unit:'万元/人',
+      data2025:[0.71,0.74,0.86,0.80,0.81,0.88,0.84,0.84,0.89,0.86,0.89,0.99],
+      data2026:[0.89,0.86,1.33,1.07,null,null,null,null,null,null,null,null],
+      yoy:[24.14,15.36,53.95,33.44,null,null,null,null,null,null,null,null],
+      mom:[null,-3.48,54.80,-19.59,null,null,null,null,null,null,null,null],
+      avg2025:0.78,ytd2025:0.78,avg2026:1.03,ytd2026:1.03,analysis:"" },
+    { id:'ecomLaborCost', name:'🛒 电商中心人均人力成本', unit:'万元/人',
+      data2025:[0.93,0.88,0.99,0.91,0.89,1.00,1.02,1.11,1.05,1.07,1.06,1.09],
+      data2026:[0.98,1.21,1.51,1.20,null,null,null,null,null,null,null,null],
+      yoy:[5.46,36.81,52.60,31.64,null,null,null,null,null,null,null,null],
+      mom:[null,23.22,25.00,-20.81,null,null,null,null,null,null,null,null],
+      avg2025:0.93,ytd2025:3.71,avg2026:1.22,ytd2026:4.88,analysis:"" },
+    { id:'mktLaborCost', name:'📢 营销中心人均人力成本', unit:'万元/人',
+      data2025:[1.22,1.31,1.44,1.21,1.21,1.23,1.26,1.25,1.26,1.18,1.19,1.28],
+      data2026:[1.13,1.19,2.81,1.66,null,null,null,null,null,null,null,null],
+      yoy:[-7.78,-9.55,95.47,37.53,null,null,null,null,null,null,null,null],
+      mom:[null,5.32,136.29,-41.01,null,null,null,null,null,null,null,null],
+      avg2025:1.30,ytd2025:5.18,avg2026:1.70,ytd2026:6.76,analysis:"" },
+    { id:'costToTotalExpense', name:'⚖️ 人力成本费用比', unit:'%',
+      data2025:[26.40,38.03,24.86,28.12,30.41,30.95,29.82,28.41,35.02,31.03,32.47,29.37],
+      data2026:[30.12,39.37,47.56,31.72,null,null,null,null,null,null,null,null],
+      yoy:[14.08,3.52,91.31,12.80,null,null,null,null,null,null,null,null],
+      mom:[null,30.73,20.80,-33.29,null,null,null,null,null,null,null,null],
+      avg2025:28.30,ytd2025:28.30,avg2026:36.59,ytd2026:36.59,analysis:"" },
+    { id:'costToRevenue', name:'💵 总人力成本营业收入比', unit:'%',
+      data2025:[26.40,38.03,24.86,28.12,30.41,30.95,29.82,28.41,35.02,31.03,32.47,29.37],
+      data2026:[7.13,15.64,18.08,10.53,null,null,null,null,null,null,null,null],
+      yoy:[-72.99,-58.87,-27.27,-62.57,null,null,null,null,null,null,null,null],
+      mom:[null,119.36,15.59,-41.78,null,null,null,null,null,null,null,null],
+      avg2025:29.35,ytd2025:28.30,avg2026:12.85,ytd2026:11.57,analysis:"" },
+    { id:'ecomCostToRevenue', name:'📦 电商人力成本营业收入比', unit:'%',
+      data2025:[3.22,7.03,5.10,3.95,3.58,3.70,3.72,3.81,3.54,3.83,3.68,3.92],
+      data2026:[2.78,7.01,7.03,4.70,null,null,null,null,null,null,null,null],
+      yoy:[-13.55,-0.22,37.76,18.80,null,null,null,null,null,null,null,null],
+      mom:[null,152.00,0.19,-33.12,null,null,null,null,null,null,null,null],
+      avg2025:4.39,ytd2025:6.84,avg2026:4.88,ytd2026:4.88,analysis:"" },
+    { id:'mktCostToRevenue', name:'📈 营销人力成本营业收入比', unit:'%',
+      data2025:[1.74,5.40,3.49,2.37,2.46,2.24,2.31,2.42,2.47,3.48,2.56,2.97],
+      data2026:[1.88,4.76,8.53,3.32,null,null,null,null,null,null,null,null],
+      yoy:[7.58,-11.86,144.63,39.77,null,null,null,null,null,null,null,null],
+      mom:[null,154.02,79.14,-61.14,null,null,null,null,null,null,null,null],
+      avg2025:2.77,ytd2025:2.77,avg2026:4.00,ytd2026:4.00,analysis:"" },
+    { id:'roiLabor', name:'📉 人力成本投资收益率', unit:'%',
+      data2025:[90.00,-76.59,-97.37,34.33,90.68,-6.54,46.00,45.55,45.67,3.57,-79.50,-83.20],
+      data2026:[189.52,-68.77,-117.01,-48.17,null,null,null,null,null,null,null,null],
+      yoy:[110.58,-10.21,-20.17,-240.31,null,null,null,null,null,null,null,null],
+      mom:[null,-136.29,-70.15,-58.83,null,null,null,null,null,null,null,null],
+      avg2025:-9.42,ytd2025:-9.42,avg2026:-19.94,ytd2026:-19.94,analysis:"" }
+  ];
+
+  let modules = JSON.parse(JSON.stringify(defaultModules));
+  let currentIdx = 0;
+  let chartObj = null;
+  const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+  const cardNum = (v, unit) => {
+    if (v == null || isNaN(v)) return '-';
+    if (unit === '%') return v.toFixed(2) + '%';
+    if (unit === '件/人') return v.toFixed(0);
+    if (unit === '万元') return v.toFixed(2);
+    if (unit === '万元/人') return v.toFixed(2);
+    return v.toFixed(2);
+  };
+  const tableNum = (v, unit) => {
+    if (v == null || isNaN(v)) return '-';
+    if (unit === '%') return v.toFixed(2) + '%';
+    if (unit === '件/人') return v.toFixed(0);
+    return v.toFixed(2);
+  };
+  const arrow = v=>v>0?'<span class="arrow-up">▲</span>':(v<0?'<span class="arrow-down">▼</span>':'');
+  const ytd = arr=>arr.reduce((s,v)=>s+(typeof v=='number'?v:0),0);
+
+  function saveData(){try{localStorage.setItem('hr_dashboard_v6',JSON.stringify(modules));}catch(e){}}
+  function loadData(){
+    try{
+      const d=localStorage.getItem('hr_dashboard_v6');
+      if(d) modules = JSON.parse(d);
+      else modules = JSON.parse(JSON.stringify(defaultModules));
+    } catch(e){ modules = JSON.parse(JSON.stringify(defaultModules)); }
+  }
+
+  function genAnalysis(mod){
+    const d=mod.data2026.filter(v=>v!=null); if(!d.length) return '暂无2026年数据。';
+    let last=0; for(let i=11;i>=0;i--) if(mod.data2026[i]!=null){last=i;break}
+    const m=months[last], v=mod.data2026[last], y=mod.yoy[last], mo=mod.mom[last];
+    const fmt = (val,u) => {
+      if(val==null||isNaN(val)) return '-';
+      if(u==='%') return val.toFixed(2)+'%';
+      if(u==='件/人') return val.toFixed(0)+'件/人';
+      if(u==='万元') return val.toFixed(2)+'万元';
+      if(u==='万元/人') return val.toFixed(2)+'万元/人';
+      return val.toFixed(2);
+    };
+    let html = `<b>• 截至${m}，2026年YTD为${fmt(mod.ytd2026,mod.unit)}，同比${mod.ytd2026-mod.ytd2025>=0?'增长':'下降'}${fmt(Math.abs(mod.ytd2026-mod.ytd2025),mod.unit)}。</b><br>`;
+    html += `<b>• ${m}当月值为${fmt(v,mod.unit)}，同比${y!=null?fmt(y,'%'):'无'}，环比${mo!=null?fmt(mo,'%'):'无'}。</b><br>`;
+    let suggestion = '';
+    if(y!=null && y>20) suggestion = '<span style="color:#16a34a">✓ 同比大幅提升，表现优异。</span>';
+    else if(y!=null && y<-20) suggestion = '<span style="color:#dc2626">⚠️ 同比显著下降，需排查原因。</span>';
+    if(mo!=null && mo>30) suggestion += ' <span style="color:#2563eb">环比增长强劲。</span>';
+    else if(mo!=null && mo<-30) suggestion += ' <span style="color:#dc2626">环比下滑明显。</span>';
+    if(!suggestion) suggestion = '数据平稳，继续保持。';
+    html += `💡 建议：${suggestion}<br>`;
+    let warns=[];
+    for(let i=0;i<=last;i++){
+      if(mod.yoy[i]!=null&&Math.abs(mod.yoy[i])>50) warns.push(`${months[i]}同比${fmt(mod.yoy[i],'%')}`);
+      if(mod.mom[i]!=null&&Math.abs(mod.mom[i])>50) warns.push(`${months[i]}环比${fmt(mod.mom[i],'%')}`);
+    }
+    if(warns.length) html += `<span style="color:#dc2626">⚠️ 异常波动：${warns.join('、')}，请重点关注。</span>`;
+    return html;
+  }
+
+  function recalc(mod){
+    for(let i=0;i<12;i++){
+      mod.yoy[i] = (mod.data2025[i]!=null&&mod.data2026[i]!=null&&mod.data2025[i]!=0) ? ((mod.data2026[i]-mod.data2025[i])/Math.abs(mod.data2025[i]))*100 : null;
+      if(i>0&&mod.data2026[i]!=null&&mod.data2026[i-1]!=null&&mod.data2026[i-1]!=0) mod.mom[i]=((mod.data2026[i]-mod.data2026[i-1])/Math.abs(mod.data2026[i-1]))*100;
+      else if(i===0) mod.mom[i]=null; else mod.mom[i]=null;
+    }
+    mod.avg2026 = mod.data2026.filter(v=>v!=null).reduce((a,b)=>a+b,0)/(mod.data2026.filter(v=>v!=null).length||1);
+    mod.ytd2026 = ytd(mod.data2026);
+    mod.avg2025 = mod.data2025.filter(v=>v!=null).reduce((a,b)=>a+b,0)/(mod.data2025.filter(v=>v!=null).length||1);
+    mod.ytd2025 = ytd(mod.data2025);
+  }
+
+  modules.forEach(m => recalc(m));
+  modules.forEach(m => { if(!m.analysis) m.analysis = genAnalysis(m); });
+
+  let searchTerm = '';
+
+  function renderNavList(filtered) {
+    const navList = document.getElementById('navList');
+    if (!navList) return;
+    navList.innerHTML = filtered.map(m => {
+      const idx = modules.indexOf(m);
+      return `<div class="nav-item ${idx===currentIdx?'active':''}" data-index="${idx}">${m.name}</div>`;
+    }).join('');
+  }
+
+  function renderSidebar(){
+    const sidebar = document.getElementById('sidebar');
+    sidebar.innerHTML = `
+      <div class="sidebar-title">百世兴人效数据看板</div>
+      <div class="search-box">
+        <i>🔍</i>
+        <input type="text" id="moduleSearch" placeholder="搜索模块..." value="${searchTerm}">
+      </div>
+      <div class="nav-list" id="navList"></div>
+    `;
+    const filtered = modules.filter(m => m.name.toLowerCase().includes(searchTerm));
+    renderNavList(filtered);
+    document.getElementById('moduleSearch').addEventListener('input', function(e) {
+      searchTerm = e.target.value.toLowerCase();
+      const filtered = modules.filter(m => m.name.toLowerCase().includes(searchTerm));
+      renderNavList(filtered);
+    });
+  }
+
+  function showSaveSuccess() {
+    const toast = document.createElement('div');
+    toast.className = 'save-success';
+    toast.textContent = '✓ 分析已保存';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  }
+
+  function renderDashboard(){
+    const mod = modules[currentIdx];
+    const year = document.getElementById('yearFilter').value;
+    const monthVal = document.getElementById('monthFilter').value;
+    const s25 = year==='all'||year==='2025', s26 = year==='all'||year==='2026';
+    const isYtd = monthVal === 'ytd';
+    const monthIdx = isYtd ? -1 : parseInt(monthVal);
+    const unit = mod.unit;
+
+    let cardsHtml = '';
+    if (isYtd) {
+      const ytdCh = (mod.ytd2026!=null&&mod.ytd2025!=null) ? mod.ytd2026-mod.ytd2025 : null;
+      const trend = (()=>{
+        const d=mod.data2026.filter(v=>v!=null);
+        if(d.length<2) return '数据不足';
+        return d[d.length-1] > d[d.length-2] ? '📈上升' : (d[d.length-1] < d[d.length-2] ? '📉下降' : '➡️持平');
+      })();
+      cardsHtml = `
+        <div class="card" style="border-top:4px solid #2563eb"><div class="card-label">2026 YTD <span class="unit">(${unit})</span></div><div class="card-value" style="color:#2563eb">${cardNum(mod.ytd2026, unit)}</div></div>
+        <div class="card" style="border-top:4px solid #94a3b8"><div class="card-label">2025 YTD <span class="unit">(${unit})</span></div><div class="card-value" style="color:#475569">${cardNum(mod.ytd2025, unit)}</div></div>
+        <div class="card" style="border-top:4px solid ${ytdCh>0?'#dc2626':'#16a34a'}"><div class="card-label">YTD变化 <span class="unit">(${unit})</span></div><div class="card-value" style="color:${ytdCh>0?'#dc2626':'#16a34a'}">${ytdCh!=null?(ytdCh>0?'+':'')+cardNum(ytdCh, unit):'-'}</div></div>
+        <div class="card" style="border-top:4px solid #f59e0b"><div class="card-label">趋势</div><div class="card-value" style="font-size:20px">${trend}</div></div>
+      `;
+    } else {
+      const mv = mod.data2026[monthIdx];
+      const yoyV = mod.yoy[monthIdx];
+      const momV = mod.mom[monthIdx];
+      cardsHtml = `
+        <div class="card" style="border-top:4px solid #2563eb"><div class="card-label">2026年${months[monthIdx]} <span class="unit">(${unit})</span></div><div class="card-value" style="color:#2563eb">${cardNum(mv, unit)}</div></div>
+        <div class="card" style="border-top:4px solid ${yoyV>0?'#dc2626':'#16a34a'}"><div class="card-label">同比</div><div class="card-value" style="color:${yoyV>0?'#dc2626':'#16a34a'}">${yoyV!=null?arrow(yoyV)+cardNum(yoyV,'%'):'-'}</div></div>
+        <div class="card" style="border-top:4px solid ${momV>0?'#dc2626':'#16a34a'}"><div class="card-label">环比</div><div class="card-value" style="color:${momV>0?'#dc2626':'#16a34a'}">${momV!=null?arrow(momV)+cardNum(momV,'%'):'-'}</div></div>
+        <div class="card" style="border-top:4px solid #f59e0b"><div class="card-label">2026 YTD <span class="unit">(${unit})</span></div><div class="card-value" style="font-size:20px">${cardNum(mod.ytd2026, unit)}</div></div>
+      `;
+    }
+
+    const tableRows = Array.from({length:12}, (_, i) => {
+      const v25 = mod.data2025[i];
+      const v26 = mod.data2026[i];
+      const yoyV = mod.yoy[i];
+      const momV = mod.mom[i];
+      return `<tr class="${i===monthIdx?'highlight-row':''}">
+        <td>${months[i]}</td>
+        <td class="editable" data-type="data2025" data-idx="${i}">${s25 ? tableNum(v25, unit) : '-'}</td>
+        <td class="editable" data-type="data2026" data-idx="${i}">${s26 ? (v26!=null ? tableNum(v26, unit) : '-') : '-'}</td>
+        <td>${(s25 && s26 && yoyV!=null) ? arrow(yoyV) + tableNum(yoyV, '%') : '-'}</td>
+        <td>${(s26 && momV!=null) ? arrow(momV) + tableNum(momV, '%') : '-'}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('dashboardContent').innerHTML = `
+      <div class="analysis-card" id="analysisCard">
+        <div class="analysis-title">📊 数据分析</div>
+        <div class="analysis-content" id="analysisContent">${mod.analysis}</div>
+        <div class="edit-tools" id="editTools" style="display:none">
+          <div class="format-bar">
+            <button class="format-btn" data-cmd="bold"><b>B</b></button>
+            <button class="format-btn" data-cmd="italic"><i>I</i></button>
+            <button class="format-btn" data-cmd="foreColor" data-value="#dc2626">🔴</button>
+            <button class="format-btn" data-cmd="foreColor" data-value="#16a34a">🟢</button>
+            <button class="format-btn" data-cmd="foreColor" data-value="#2563eb">🔵</button>
+          </div>
+          <button class="btn" id="saveAnalysisBtn">💾 保存</button>
+          <button class="btn" id="cancelAnalysisBtn">↩️ 取消</button>
+        </div>
+        <span class="edit-hint" id="toggleEdit">✎ 编辑</span>
+      </div>
+      <div class="cards">${cardsHtml}</div>
+      <div class="chart-container" id="chartContainer"></div>
+      <div class="table-wrapper"><table><thead><tr><th>月份</th><th>2025年</th><th>2026年</th><th>同比</th><th>环比</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
+
+    // 编辑功能绑定
+    const analysisContent = document.getElementById('analysisContent');
+    const editTools = document.getElementById('editTools');
+    const toggleEdit = document.getElementById('toggleEdit');
+    let originalHtml = mod.analysis;
+
+    function enterEditMode() {
+      analysisContent.contentEditable = 'true';
+      analysisContent.focus();
+      editTools.style.display = 'flex';
+      toggleEdit.style.display = 'none';
+      originalHtml = mod.analysis;
+    }
+
+    function exitEditMode() {
+      analysisContent.contentEditable = 'false';
+      editTools.style.display = 'none';
+      toggleEdit.style.display = 'block';
+    }
+
+    toggleEdit.onclick = enterEditMode;
+
+    document.getElementById('saveAnalysisBtn').onclick = function() {
+      mod.analysis = analysisContent.innerHTML;
+      saveData();
+      exitEditMode();
+      showSaveSuccess();
+    };
+
+    document.getElementById('cancelAnalysisBtn').onclick = function() {
+      analysisContent.innerHTML = originalHtml;
+      mod.analysis = originalHtml;
+      exitEditMode();
+    };
+
+    // 格式按钮
+    document.querySelectorAll('.format-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cmd = btn.dataset.cmd;
+        const value = btn.dataset.value || null;
+        document.execCommand(cmd, false, value);
+        analysisContent.focus();
+      });
+    });
+
+    // 表格编辑
+    document.querySelectorAll('td.editable').forEach(td=>{
+      td.ondblclick = function(){
+        const type=this.dataset.type, idx=parseInt(this.dataset.idx);
+        const cur = type==='data2025'?mod.data2025[idx]:mod.data2026[idx];
+        const inp=document.createElement('input'); inp.type='number';inp.step='any';inp.value=cur!=null?cur:'';inp.className='edit-field';
+        this.innerHTML='';this.appendChild(inp);inp.focus();
+        inp.onblur = ()=>{
+          const nv = inp.value.trim()===''?null:parseFloat(inp.value);
+          if(type==='data2025') mod.data2025[idx]=nv; else mod.data2026[idx]=nv;
+          recalc(mod); saveData();
+          mod.analysis = genAnalysis(mod);
+          renderDashboard();
+        };
+        inp.onkeypress = e=>{if(e.key==='Enter')inp.blur();};
+      };
+    });
+
+    const datasets = [];
+    if(s25) datasets.push({type:'bar',label:'2025年',data:mod.data2025,backgroundColor:'#94a3b8', unit: unit});
+    if(s26) datasets.push({type:'bar',label:'2026年',data:mod.data2026,backgroundColor:'#2563eb', unit: unit});
+    const chartContainer = document.getElementById('chartContainer');
+    chartObj = new SimpleChart(chartContainer, {labels:months, datasets}, monthIdx);
+  }
+
+  document.getElementById('sidebar').addEventListener('click', (e) => {
+    const navItem = e.target.closest('.nav-item');
+    if (navItem) {
+      currentIdx = parseInt(navItem.dataset.index);
+      renderNavList(modules.filter(m => m.name.toLowerCase().includes(searchTerm)));
+      renderDashboard();
+    }
+  });
+
+  document.getElementById('yearFilter').onchange = () => { renderDashboard(); };
+  document.getElementById('monthFilter').onchange = () => { renderDashboard(); };
+
+  document.getElementById('exportBtn').onclick = ()=>{
+    const mod=modules[currentIdx];
+    let csv='月份,2025年,2026年,同比%,环比%\n';
+    for(let i=0;i<12;i++) csv+=`${months[i]},${mod.data2025[i]??''},${mod.data2026[i]??''},${mod.yoy[i]??''},${mod.mom[i]??''}\n`;
+    csv+=`\n分析,"${mod.analysis.replace(/"/g,'""')}"`;
+    const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`人效_${mod.name}.csv`; a.click();
+  };
+  document.getElementById('importBtn').onclick = ()=> document.getElementById('importFile').click();
+  document.getElementById('importFile').onchange = e => {
+    const file=e.target.files[0]; if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const lines=ev.target.result.split('\n').filter(l=>l.trim());
+      if(lines[0].split(',')[0]!=='月份') return alert('格式错误');
+      const mod=modules[currentIdx];
+      for(let i=1;i<lines.length;i++){
+        const cols=lines[i].split(',');
+        if(cols[0]==='分析'){mod.analysis=cols.slice(1).join(',').replace(/"/g,'');break;}
+        const mi=months.indexOf(cols[0]); if(mi===-1) continue;
+        mod.data2025[mi]=cols[1]!==''?parseFloat(cols[1]):null;
+        mod.data2026[mi]=cols[2]!==''?parseFloat(cols[2]):null;
+        mod.yoy[mi]=cols[3]!==''?parseFloat(cols[3]):null;
+        mod.mom[mi]=cols[4]!==''?parseFloat(cols[4]):null;
+      }
+      recalc(mod); saveData();
+      if(!mod.analysis) mod.analysis = genAnalysis(mod);
+      renderAll(); alert('导入成功');
+    };
+    reader.readAsText(file,'UTF-8');
+    e.target.value='';
+  };
+  document.getElementById('resetBtn').onclick = ()=>{
+    if(confirm('重置所有修改？')){
+      modules = JSON.parse(JSON.stringify(defaultModules));
+      modules.forEach(m => { recalc(m); m.analysis = genAnalysis(m); });
+      saveData(); renderAll();
+    }
+  };
+
+  function renderAll() {
+    renderSidebar();
+    renderDashboard();
+  }
+
+  loadData();
+  modules.forEach(m => recalc(m));
+  modules.forEach(m => { if(!m.analysis) m.analysis = genAnalysis(m); });
+  renderAll();
+})();
+</script>
+</body>
+</html>
